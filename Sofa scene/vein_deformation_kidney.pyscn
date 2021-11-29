@@ -1,0 +1,269 @@
+import Sofa
+import sys
+from stlib.scene import MainHeader, ContactHeader
+
+from stlib.visuals import ShowGrid
+#import the object
+from stlib.physics.rigid import Cube
+from stlib.physics.rigid import Sphere
+from stlib.physics.rigid import Floor
+from stlib.physics.rigid import RigidObject
+
+#global kidney
+#global node
+
+def createScene(node):
+    #is possible to interact with the scene using a python script
+    
+    node.gravity = "0 0 0"
+    node.name = "root"
+    """ MainHeader(node, gravity=[0.0, -981.0, 0.0]) """
+    node.findData('dt').value = 0.1
+    
+
+    #node.createObject("VisualStyle", displayFlags="showBehavior ")
+    node.createObject("VisualStyle", displayFlags="showVisual ")
+    #node.createObject("VisualStyle", displayFlags=" showCollisionModels showBehavior")
+
+
+    req_plugin = node.createChild("RequiredPlugins")
+    req_plugin.createObject("RequiredPlugin", name="reqpl1",  pluginName='SofaImplicitOdeSolver')
+    req_plugin.createObject("RequiredPlugin", name="reqpl2", pluginName='SofaBoundaryCondition')
+    req_plugin.createObject("RequiredPlugin", name="reqpl3", pluginName='SofaMiscForceField')
+    req_plugin.createObject("RequiredPlugin", name="reqpl4", pluginName='SofaOpenglVisual')
+    req_plugin.createObject("RequiredPlugin", name="reqpl5", pluginName='SofaSimpleFem')
+    req_plugin.createObject("RequiredPlugin", name="reqpl6", pluginName='SofaValidation')
+    req_plugin.createObject("RequiredPlugin", name="reqpl7", pluginName='SofaLoader')
+    req_plugin.createObject("RequiredPlugin", name="reqpl8", pluginName='SofaMeshCollision')
+    req_plugin.createObject("RequiredPlugin", name="reqpl9", pluginName='SofaPython')
+    req_plugin.createObject("RequiredPlugin", name="reqpl10", pluginName='SofaDeformable')
+    req_plugin.createObject("RequiredPlugin", name="reqpl11", pluginName='SofaRigid')
+    req_plugin.createObject("RequiredPlugin", name="reqpl12", pluginName='SofaEngine')
+    req_plugin.createObject("RequiredPlugin", name="reqpl13", pluginName='SofaGeneralEngine')
+    req_plugin.createObject("RequiredPlugin", name="reqpl14",pluginName='SofaGeneralObjectInteraction')
+    req_plugin.createObject("RequiredPlugin", name="reqpl15",pluginName='SofaConstraint')
+
+    #node.createObject("PythonScriptController", filename="ExampleController.py", classname="ExampleController", printLog="true")
+
+    node.createObject("DefaultAnimationLoop")
+    
+    node.createObject("DefaultPipeline", verbose="1", draw="1")
+    node.createObject("BruteForceDetection", name="N2")
+    
+    node.createObject("MinProximityIntersection", alarmDistance="0.3", contactDistance="0.1")
+    node.createObject("DefaultContactManager")
+    
+    """ node.createObject("CollisionResponse", name="Response", response="default")
+    
+    node.createObject("DefaultCollisionGroupManager")  """
+
+
+    """ node.createObject("FreeMotionAnimationLoop" )
+    node.createObject("DefaultPipeline", depth="15", verbose="0", draw="0")
+    node.createObject("BruteForceBroadPhase", name="N2")
+    node.createObject("BVHNarrowPhase")
+    node.createObject("MinProximityIntersection", name="Proximity", alarmDistance="1.5", contactDistance="1" )
+    node.createObject("DefaultContactManager", name="Response", response="FrictionContact" ) """
+
+    node.createObject("EulerImplicitSolver")
+    node.createObject("CGLinearSolver", iterations="20", tolerance="1e-09", threshold="1e-09")
+
+
+    
+    node.createObject("MeshGmshLoader", name="meshLoaderFineV", filename="./vein3.msh")
+    node.createObject("MeshGmshLoader", name="meshLoaderFineA", filename="./art3.msh")
+    node.createObject("MeshGmshLoader", name="meshLoaderCoarse", filename="./justkidney1.msh")
+    node.createObject("MeshGmshLoader", name="meshLoaderFine", filename="./justkidney1.msh")
+    #node.createObject("MeshObjLoader", name="meshLoaderCoarse", filename="./4prova.stl")
+    
+ 
+    node.animate = "true"
+
+
+
+
+    #vene
+    scale = 0.1 #UNIT DI MISURA DECIMETRI (da cm a decimetri)
+
+    vene = node.createChild("vene")
+    vene.createObject("EulerImplicitSolver")
+    vene.createObject("CGLinearSolver", iterations="20", tolerance="1e-09", threshold="1e-09")
+
+    vene.createObject("TetrahedronSetTopologyContainer", name="topov", src="@../meshLoaderFineV")
+    vene.createObject("TetrahedronSetGeometryAlgorithms", template="Vec3d", name="GeomAlgo")
+    vene.createObject("MechanicalObject", template="Vec3d", name="MechanicalModelv", showObject="0", scale3d=[scale, scale, scale], rx = 105, ry = -40, rz = 0.0, dx = 2, dy =-39, dz = 7,   showIndices="0", showIndicesScale="0.001", showColor="0 255 0 255")
+    #vene.createObject("TetrahedronFEMForceField", name="FEMv", youngModulus="1200", poissonRatio="0.4" )
+    vene.createObject("TetrahedronFEMForceField", name="FEMv", youngModulus="410000", poissonRatio="0.45" )
+
+    #(24.52 kPa
+    #600
+
+    #vene.createObject("MeshMatrixMass", massDensity="1") 
+    vene.createObject("UniformMass", vertexMass="0.05" )
+    #vene.createObject("SphereCollisionModel", name="Sphere For Collision", radius="0.1")
+    
+    #vene.createObject("FixedConstraint", indices="63 69 70 71 66 67 68 0 2 4 51" )
+    #vene.createObject("FixedConstraint", indices="63 69 70 71 66 67 68 200 204 203" )
+    vene.createObject("FixedConstraint", indices="1687 1673 1543 1610 1630 1647 1714 1688 722 730" )
+
+    visual = vene.createChild("Visual")
+
+    visual.createObject("OglModel", name="VisualModel", src="@../../meshLoaderFineV", scale3d=[scale, scale, scale], rx = 105, ry = -40, rz = 0.0, dx = 2, dy =-39, dz = 7, material = "Default Diffuse 1 0 0 1 1 Ambient 1 0.2 0.2 0.2 1 Specular 0 1 1 1 1 Emissive 0 0 0 0 0 Shininess 0 45", isEnabled="true")
+    visual.createObject("BarycentricMapping", name="Mapping", input="@../MechanicalModelv", output="@VisualModel")
+
+    collisionv = vene.createChild("Collisionv")
+    collisionv.createObject("Mesh", src="@../../meshLoaderFineV")
+    collisionv.createObject("MechanicalObject", name="StoringForcesv", scale3d=[scale, scale, scale], rx = 105, ry = -40, rz = 0.0, dx = 2, dy =-39, dz = 7,)
+    collisionv.createObject("TriangleCollisionModel", name="CollisionModelv", contactStiffness="30", selfCollision="0")
+    collisionv.createObject("BarycentricMapping", name="CollisionMappingv", input="@../", output="@StoringForcesv") 
+    collisionv.createObject("SphereCollisionModel", name="Sphere For Collision", radius="0.07")
+
+    monitor = vene.createChild("Monitor")
+    #15
+    #indices_tomonitor_v = "92 21 68 10"
+    indices_tomonitor_v = "1752 1657 322 304 262 926 339 422 2104 2150 2146 2331 2318 2271 2363 2966 1281 1343  1411 2488 2502 2495 2469 2421 2748  2505 891 1089 1100 1184 2913 2847 1786 1768 1872  2067 2017 2013 1980 1942 1920 385 507 499 518 544 537 2665 2637 2594 2569 2723 2737 2729"
+    monitor.createObject("Monitor", template="Vec3d", name="interesting_points", listening="1", indices=indices_tomonitor_v, showPositions="1", PositionsColor="0 0 1 1", showVelocities="0", VelocitiesColor="1 1 0 1", ForcesColor="1 1 0 1", showMinThreshold="0.01", TrajectoriesPrecision="0.1", TrajectoriesColor="0 0 1 1", sizeFactor="5", showForces="0", showTrajectories="0",   ExportForces='true', ExportPositions='true', ExportVelocities='true')
+
+
+
+    # Arterie
+
+    art = node.createChild("arterie")
+    art.createObject("EulerImplicitSolver")
+    art.createObject("CGLinearSolver", iterations="20", tolerance="1e-09", threshold="1e-09")
+
+    art.createObject("TetrahedronSetTopologyContainer", name="topoa", src="@../meshLoaderFineA")
+    art.createObject("TetrahedronSetGeometryAlgorithms", template="Vec3d", name="GeomAlgo")
+    art.createObject("MechanicalObject", template="Vec3d", name="MechanicalModela", showObject="0", scale3d=[scale, scale, scale], rx = 105, ry = -40, rz = 0.0, dx = 2, dy =-39, dz = 7,   showIndices="0", showIndicesScale="0.001", showColor="0 255 0 255")
+    art.createObject("TetrahedronFEMForceField", name="FEMv", youngModulus="200000", poissonRatio="0.45" )
+
+    #43.25 kPa
+    #200 kpa
+
+    #vene.createObject("MeshMatrixMass", massDensity="1") 
+    art.createObject("UniformMass", vertexMass="0.05" )
+    #vene.createObject("SphereCollisionModel", name="Sphere For Collision", radius="0.1")
+    
+    #vene.createObject("FixedConstraint", indices="63 69 70 71 66 67 68 0 2 4 51" )
+    #vene.createObject("FixedConstraint", indices="63 69 70 71 66 67 68 200 204 203" )
+    art.createObject("FixedConstraint", indices="1278 1277 1385 1365 1310 1380 1347 1353 1291 " )
+
+    
+
+    collisiona = art.createChild("Collisiona")
+    collisiona.createObject("Mesh", src="@../../meshLoaderFineA")
+    collisiona.createObject("MechanicalObject", name="StoringForcesa", scale3d=[scale, scale, scale], rx = 105, ry = -40, rz = 0.0, dx = 2, dy =-39, dz = 7,)
+    collisiona.createObject("TriangleCollisionModel", name="CollisionModela", contactStiffness="30", selfCollision="0")
+    collisiona.createObject("BarycentricMapping", name="CollisionMappinga", input="@../", output="@StoringForcesa") 
+    collisiona.createObject("SphereCollisionModel", name="Sphere For Collision", radius="0.07", visible = '0')
+
+    visuala = art.createChild("Visuala")
+
+    visuala.createObject("OglModel", name="VisualModela", src="@../../meshLoaderFineA", scale3d=[scale, scale, scale], rx = 105, ry = -40, rz = 0.0, dx = 2, dy =-39, dz = 7, material = "Default Diffuse 1 1 0 0 1 Ambient 1 0.2 0.2 0.2 1 Specular 0 1 1 1 1 Emissive 0 0 0 0 0 Shininess 0 45")
+    visuala.createObject("BarycentricMapping", name="Mapping", input="@../MechanicalModela", output="@VisualModela")
+
+    monitor = art.createChild("Monitor")
+    #15
+    #indices_tomonitor_a = "92 21 68 10"
+    indices_tomonitor_a = "2129 2100 1971 249 1061 1085 304 1142 1869 1828 1816 979 935 	1022  990 887 882 796 627 655  88      		531 674 781		487 484 420 402 371	915 2147  2515 2498 2472 2444 1785 1736		2441 2260 2237 2202 1645 102 1587			1413			2200 2172"
+    monitor.createObject("Monitor", template="Vec3d", name="interesting_points", listening="1", indices = indices_tomonitor_a, showPositions="1", PositionsColor="1 0 0 1", showVelocities="0", VelocitiesColor="1 1 0 1", ForcesColor="1 1 0 1", showMinThreshold="0.01", TrajectoriesPrecision="0.1", TrajectoriesColor="1 0 0 1", sizeFactor="5", showForces="0", showTrajectories="0",   ExportForces='true', ExportPositions='true', ExportVelocities='true')
+
+
+
+
+
+    
+    
+    
+    #particle control plane
+    
+    particleControl = node.createChild("ParticleControl")
+    particleControl.createObject("TransformEngine", template="Rigid3d", name="engine", input_position="-1.5 -1.3 0  0 0 0 1", translation="0 1 0")
+    particleControl.createObject("EulerImplicitSolver", name="EulerImplicit", rayleighStiffness="0.1", rayleighMass="0.1")
+    particleControl.createObject("CGLinearSolver", name="CG Solver", iterations="25", tolerance="1e-5", threshold="1e-5")
+    #particleControl.createObject("MechanicalObject", template="Rigid3d", name="myRigidParticleForRotation", position="@engine.output_position", showObject="true", showObjectScale="0.1")
+
+
+    
+    
+    
+
+
+
+    
+
+    # liver
+    kidney = node.createChild("kidney")
+    
+    kidney.createObject("EulerImplicitSolver")
+    kidney.createObject("CGLinearSolver", iterations="20", tolerance="1e-09", threshold="1e-09")
+
+    kidney.createObject("MechanicalObject", template="Rigid3d", name="MechanicalModel", showObject="1", dx = 0, dy =0, dz = 0,  showIndices="1", showIndicesScale="0.001", position="@../ParticleControl/engine.output_position")
+
+    
+
+    shape = kidney.createChild("Shape")
+    #shape.createObject("MeshTopology", name="topo", src="@../meshLoaderCoarse")
+    shape.createObject("MechanicalObject", name="StoringForces", scale3d=[scale, scale, scale], rx = 105, ry = -40, rz = 0.0, dx = 2, dy =-39, dz = 7, showIndices="0", showIndicesScale="0.005", showColor="255 255 255 255 ",  src="@../../meshLoaderFine", template="Vec3d")
+    shape.createObject("RigidMapping", name="CollisionMapping", input="@../", output="@StoringForces")
+
+    scale = 0.1
+    
+
+
+    #75[kPa], 0.45 or 0.495
+    
+    kidney.createObject("UniformMass",  totalMass="1")   
+
+    
+
+ 
+
+
+    #Visual node under liver
+    visual = kidney.createChild("Visual")
+    #visual.createObject("Mesh", src="@../../meshLoaderFine")
+
+
+
+    visual.createObject("OglModel", name="VisualModel2", scale3d=[scale, scale, scale], rx = 105, ry = -40, rz = 0.0, dx = 2, dy =-39, dz = 7, showIndices="1", src="@../../meshLoaderFine", material = "Default Diffuse 1 1 0.666667 0 1 Ambient 1 0.2 0.2 0.2 1 Specular 0 1 1 1 1 Emissive 0 0 0 0 0 Shininess 0 45")
+    visual.createObject("RigidMapping", name="Mapping3", input="@../", output="@VisualModel2")
+
+
+
+
+    
+
+  
+    #attachment vein and kidney
+    """  node.createObject("AttachConstraint", name="AttachConstraint3", object2="@vene/MechanicalModelv", object1="@kidney/Visual/VisualModel", indices2="1924    1914 1927 2945 2942 2769 2679", indices1="2572 3566  2573 1704 1786 2961 3802        ", constraintFactor="1 1 1 1 1 1 1 ")
+    
+
+    #attachment artery and vein
+    node.createObject("AttachConstraint", name="AttachConstraint4", object2="@arterie/MechanicalModela", object1="@kidney/Visual/VisualModel", indices2="1542 349 2015 2285 2045", indices1=" 3670 254 1499 1866 1793", constraintFactor="1 1 1 1 1 ") """
+    
+    
+    #attachment vein and kidney
+    node.createObject("AttachConstraint", name="AttachConstraint3", object2="@vene/MechanicalModelv", object1="@kidney/Shape/StoringForces", indices2="1924    1914 1927 2945 2942 2769 2679", indices1="2572 3566  2573 1704 1786 2961 3802        ", constraintFactor="1 1 1 1 1 1 1 ")
+    
+
+    #attachment artery and kidney
+    node.createObject("AttachConstraint", name="AttachConstraint4", object2="@arterie/MechanicalModela", object1="@kidney/Shape/StoringForces", indices2="1542 349 2015 2315 2045    2332 1470", indices1=" 3670 2636 1499 1866 1793     3629 1489", constraintFactor="1 1 1 1 1 1 1")
+
+
+
+
+    node.createObject("AttachConstraint", name="AttachConstraint5", object2="@arterie/MechanicalModela", object1="@arterie/MechanicalModela", indices2="2150 2152 2525     " , indices1="920 910 2141                 ", constraintFactor="1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1")
+   
+
+    
+
+       
+
+
+
+
+    node.createObject("PythonScriptController", filename="vein_controller_kidney.py", classname="ExampleController", printLog="true")
+
+    return node    
+
