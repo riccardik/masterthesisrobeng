@@ -1,4 +1,10 @@
 # masterthesisrobeng
+## Requirements
+
+- Sofa version SOFA_v20.12.00_Win64
+- Python 2.7
+- Python 3.7
+- Numpy, Tensorflow, sklearn, matplotlib
 ## Datasets
 Download the obtained datasets:
 https://1drv.ms/u/s!AgFkspR3o6PFh4J7_29JMxpgryt7Pg?e=3A0lAh
